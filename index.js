@@ -4,8 +4,7 @@ const qrcode = require("qrcode-terminal");
 const { default: axios } = require("axios");
 const mongoose = require("mongoose")
 const User = require("./User");
-const { prompt } = require("./prompt");
-const { scripts } = require("./prompt");
+const { prompt, kzScripts, scripts } = require("./prompt");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
@@ -65,11 +64,17 @@ client.on("message", async (msg) => {
 
     if (message) {
         const answer = await gptResponse(message);
+        const isKZ = answer.toLocaleLowerCase().includes("kz")
         const match = answer.match(/\d+/g); // Ищем все последовательности цифр в строке
         if (match) {
             const scriptIndex = parseInt(match[0], 10); // Преобразуем в число
-            const script = scripts[scriptIndex]; // Получаем соответствующий скрипт из массива
+            const script = isKZ ? kzScripts[scriptIndex] : scripts[scriptIndex]; // Получаем соответствующий скрипт из массива
             if (scriptIndex === 6) {
+                if (isKZ) {
+                    await client.sendMessage(chatId, "Күте тұрыңыз, біз сізге код тағайындаймыз.");
+                } else {
+                    await client.sendMessage(chatId, "Ожидайте, присвоим вам код.");
+                }
                 client.sendMessage("120363378709019183@g.us", `Клиенту с номером '${chatId.slice(0, -5)}' нужно написать wa.me//+${chatId.slice(0, -5)}`)
             } else {
                 if (script && Array.isArray(script)) {
@@ -81,6 +86,8 @@ client.on("message", async (msg) => {
                     await client.sendMessage(chatId, "Ответ не найден. Уточните запрос.");
                 }
             }
+        } else {
+            await client.sendMessage(chatId, answer)
         }
     }
 });
