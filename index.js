@@ -64,6 +64,8 @@ client.on("message", async (msg) => {
 
     if (message) {
         const answer = await gptResponse(message);
+        console.log("answer: ", answer);
+        
         const isKZ = answer.toLocaleLowerCase().includes("kz")
         const match = answer.match(/\d+/g); // Ищем все последовательности цифр в строке
         if (match) {
