@@ -10,25 +10,9 @@ const UserSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
-        lastMessages: {
-            type: [
-                {
-                    role: {
-                        type: String,
-                        enum: ["user", "assistant"],
-                        required: true,
-                    },
-                    content: {
-                        type: String,
-                        required: true,
-                    },
-                },
-            ], // Массив строк для хранения сообщений
-            default: []
-        },
-        isGandon: {
-            type: Boolean,
-            default: false
+        language: {
+            type: String,
+            default: ""
         }
     },
     {

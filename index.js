@@ -67,12 +67,16 @@ client.on("message", async (msg) => {
         console.log("answer: ", answer);
         
         const isKZ = answer.toLocaleLowerCase().includes("kz")
+        if (isKZ) {
+            user.language = "kz"
+            await user.save()
+        }
         const match = answer.match(/\d+/g); // Ищем все последовательности цифр в строке
         if (match) {
             const scriptIndex = parseInt(match[0], 10); // Преобразуем в число
             const script = isKZ ? kzScripts[scriptIndex] : scripts[scriptIndex]; // Получаем соответствующий скрипт из массива
             if (scriptIndex === 6) {
-                if (isKZ) {
+                if (user.language === "kz") {
                     await client.sendMessage(chatId, "Күте тұрыңыз, біз сізге код тағайындаймыз.");
                 } else {
                     await client.sendMessage(chatId, "Ожидайте, присвоим вам код.");
@@ -89,7 +93,11 @@ client.on("message", async (msg) => {
                 }
             }
         } else {
-            await client.sendMessage(chatId, answer)
+            if (user?.language === "kz") {
+                await client.sendMessage(chatId, "Сұрақты түсінбедім, нақтылап жазсаңыз.")
+            } else {
+                await client.sendMessage(chatId, "Не понял вопроса, уточните, пожалуйста.")
+            }
         }
     }
 });
