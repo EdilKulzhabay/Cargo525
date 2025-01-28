@@ -47,10 +47,10 @@ client.on("message", async (msg) => {
     const chatId = msg.from;
     const message = msg.body;
     const contacts = await client.getContacts();
-    const contactExists = contacts.some(contact => contact.id._serialized === message.from);
+    const contactExists = contacts.find(contact => contact.id._serialized === msg.from);
     let user = await User.findOne({ phone: chatId });
 
-    if (contactExists && user && user?.status) {
+    if (contactExists.name !== undefined || (user && user.status)) {
         return;
     }
     if (!message || message.trim() === "") {
@@ -82,6 +82,8 @@ client.on("message", async (msg) => {
                     await client.sendMessage(chatId, "Ожидайте, присвоим вам код.");
                 }
                 client.sendMessage("120363378709019183@g.us", `Клиенту с номером '${chatId.slice(0, -5)}' нужно написать wa.me//+${chatId.slice(0, -5)}`)
+                user.status = true
+                await user.save()
             } else {
                 if (script && Array.isArray(script)) {
                     // Отправляем сообщения последовательно
