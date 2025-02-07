@@ -50,7 +50,7 @@ client.on("message", async (msg) => {
     const contactExists = contacts.find(contact => contact.id._serialized === msg.from);
     let user = await User.findOne({ phone: chatId });
 
-    if (contactExists.name !== undefined || (user && user.status)) {
+    if (contactExists?.name !== undefined || (user && user.status)) {
         return;
     }
     if (!message || message.trim() === "") {
