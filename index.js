@@ -22,6 +22,16 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--single-process',
+            '--memory-pressure-off',
+            '--disable-background-timer-throttling',
+            '--disable-breakpad'
+        ],
     },
 });
 
@@ -75,7 +85,16 @@ client.on("message", async (msg) => {
         if (match) {
             const scriptIndex = parseInt(match[0], 10); // Преобразуем в число
             const script = isKZ ? kzScripts[scriptIndex] : scripts[scriptIndex]; // Получаем соответствующий скрипт из массива
-            if (scriptIndex === 6) {
+            if (scriptIndex === 7) {
+                if (user.language === "kz") {
+                    await client.sendMessage(chatId, "Біздің менеджер сізге хабарласады, күте тұрыңыз.");
+                } else {
+                    await client.sendMessage(chatId, "С вами выйдет на связь наш менеджер, просим ожидать.");
+                }
+                client.sendMessage("120363378709019183@g.us", `Клиенту с номером '${chatId.slice(0, -5)}' нужно написать wa.me//+${chatId.slice(0, -5)}`)
+                user.status = true
+                await user.save()
+            } else if (scriptIndex === 6) {
                 if (user.language === "kz") {
                     await client.sendMessage(chatId, "Күте тұрыңыз, біз сізге код тағайындаймыз.");
                 } else {
