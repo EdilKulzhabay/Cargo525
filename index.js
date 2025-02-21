@@ -57,8 +57,13 @@ client.on('message_create', async (msg) => {
 
         if (msg.body === "Здравствуйте. Меня зовут, Гуля. Я менеджер Cargo525.") {
             let user = await User.findOne({ phone: chatId });
-            user.status = true
-            await user.save()
+            if (user) {
+                user.status = true
+                await user.save()
+            } else {
+                user = new User({ phone: chatId, status:true });
+                await user.save();
+            }
         }
     }
 });
