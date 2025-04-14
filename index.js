@@ -80,7 +80,8 @@ client.on("message", async (msg) => {
         return;
     }
     if (!message || message.trim() === "") {
-        return client.sendMessage(chatId, "Что бы отправить груз на наш склад и получить полную информацию Вам нужно присвоить КОД. Напишите Ваше ИМЯ, ГОРОД, ТЕЛЕФОН.");
+        await client.sendMessage(chatId, "Что бы отправить груз на наш склад и получить полную информацию Вам нужно присвоить КОД. Напишите Ваше ИМЯ, ГОРОД, ТЕЛЕФОН.");
+        return;
     }
 
     if (!user) {
