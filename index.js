@@ -76,6 +76,7 @@ client.on("message", async (msg) => {
     let user = await User.findOne({ phone: chatId });
 
     if (contactExists?.name !== undefined || (user && user.status)) {
+        console.log("Сообщение от контакта или пользователя со статусом true, пропускаем.");
         return;
     }
     if (!message || message.trim() === "") {
