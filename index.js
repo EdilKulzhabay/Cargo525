@@ -25,41 +25,61 @@ const client = new Client({
         headless: true,
         args: [
             "--no-sandbox",
-            "--disable-setuid-sandbox",
+            "--disable-setuid-sandbox", 
             "--disable-dev-shm-usage",
             "--disable-gpu",
+            "--disable-extensions",
+            "--disable-background-timer-throttling",
+            "--disable-backgrounding-occluded-windows",
+            "--disable-renderer-backgrounding",
+            "--disable-features=TranslateUI",
+            "--disable-web-security",
+            "--no-first-run",
+            "--no-default-browser-check"
         ],
-        timeout: 60000, // Увеличенный таймаут
+        timeout: 90000, // Увеличенный таймаут до 90 секунд
+        defaultViewport: null,
     },
-    webVersion: "2.2412.54", // Явно указываем версию WhatsApp Web
-    webVersionCache: { type: "local" }, // Локальное кэширование версии
+    webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
+    }
 });
 
-// Обработка QR-кода
 client.on("qr", (qr) => {
-    console.log("QR код сгенерирован");
     qrcode.generate(qr, { small: true });
 });
 
-// Успешная аутентификация
 client.on("authenticated", () => {
-    console.log("Authenticated successfully!");
+    console.log("✅ Authenticated successfully!");
 });
 
-// Ошибка аутентификации
 client.on("auth_failure", (msg) => {
-    console.error("Authentication failed:", msg);
+    console.error("❌ Authentication failed:", msg);
 });
 
-// Клиент готов
-client.on("ready", () => {
-    console.log("Client is ready!");
+// Добавляем событие загрузки
+client.on('loading_screen', (percent, message) => {
+    console.log('⏳ Загрузка WhatsApp:', percent + '%', message);
 });
 
-// Обработка отключения
+// Добавляем событие смены состояния
+client.on('change_state', state => {
+    console.log('🔄 Состояние клиента:', state);
+});
+
 client.on("disconnected", (reason) => {
-    console.error("Client disconnected:", reason);
-    startClient(); // Перезапуск клиента
+    console.log("❌ Client was logged out:", reason);
+    // Перезапуск через 5 секунд
+    setTimeout(() => {
+        console.log("🔄 Attempting to reconnect...");
+        client.initialize();
+    }, 5000);
+});
+
+client.on("ready", () => {
+    console.log("🚀 Client is ready!");
+    console.log("📱 Бот готов принимать сообщения!");
 });
 
 // Обработка исходящих сообщений
