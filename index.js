@@ -77,9 +77,38 @@ client.on("disconnected", (reason) => {
     }, 5000);
 });
 
-client.on("ready", () => {
+client.on("ready", async () => {
     console.log("🚀 Client is ready!");
     console.log("📱 Бот готов принимать сообщения!");
+    
+    // Получаем список всех групп для отладки
+    try {
+        const chats = await client.getChats();
+        const groups = chats.filter(chat => chat.isGroup);
+        console.log(`📋 Доступные группы (${groups.length}):`);
+        
+        groups.forEach((group, index) => {
+            console.log(`${index + 1}. "${group.name}" - ID: ${group.id._serialized}`);
+        });
+        
+        // Ищем нужную группу
+        const targetGroup = groups.find(group => 
+            group.id._serialized === "120363378709019183@g.us" ||
+            group.id._serialized.includes('120363378709019183') ||
+            group.name === 'Cargo код клиента' ||
+            group.name?.toLowerCase().includes('cargo код клиента')
+        );
+        
+        if (targetGroup) {
+            console.log(`✅ Целевая группа найдена: "${targetGroup.name}" - ID: ${targetGroup.id._serialized}`);
+        } else {
+            console.log(`⚠️ Целевая группа с ID 120363378709019183@g.us не найдена`);
+            console.log(`💡 Проверьте, что бот добавлен в нужную группу`);
+        }
+        
+    } catch (error) {
+        console.error("❌ Ошибка при получении списка групп:", error);
+    }
 });
 
 // Обработка исходящих сообщений
@@ -255,6 +284,35 @@ const sendToGroup = async (groupId, message) => {
             }
         } catch (error2) {
             console.log(`❌ Метод 2 не сработал: ${error2.message}`);
+        }
+
+        // Метод 3: Попробуем найти группу по имени
+        try {
+            const chats = await client.getChats();
+            const groups = chats.filter(chat => chat.isGroup);
+            console.log(`📋 Найдено групп: ${groups.length}`);
+            
+            // Выводим все доступные группы для отладки
+            groups.forEach(group => {
+                console.log(`📝 Группа: ${group.name} - ID: ${group.id._serialized}`);
+            });
+            
+            // Если ID не совпадает, пытаемся найти по части ID или точному имени
+            const targetGroup = groups.find(group => 
+                group.id._serialized.includes('120363378709019183') || 
+                group.name === 'Cargo код клиента' ||
+                group.name?.toLowerCase().includes('cargo код клиента') ||
+                group.name?.toLowerCase().includes('cargo')
+            );
+            
+            if (targetGroup) {
+                await targetGroup.sendMessage(message);
+                console.log(`✅ Сообщение отправлено в группу по альтернативному поиску: ${targetGroup.name}`);
+                return true;
+            }
+            
+        } catch (error3) {
+            console.log(`❌ Метод 3 не сработал: ${error3.message}`);
         }
 
         console.error(`❌ Все методы отправки в группу ${groupId} не сработали`);
