@@ -148,10 +148,10 @@ client.on("message", async (msg) => {
                         ? "Біздің менеджер сізге хабарласады, күте тұрыңыз."
                         : "С вами выйдет на связь наш менеджер, просим ожидать.";
                     await client.sendMessage(chatId, responseMessage);
-                    await client.sendMessage(
-                        "120363378709019183@g.us",
-                        `Клиенту с номером '${chatId.slice(0, -5)}' нужно написать wa.me//+${chatId.slice(0, -5)}`
-                    );
+                    
+                    // Отправка уведомления в группу
+                    await sendToGroup("120363378709019183@g.us", `Клиенту с номером '${chatId.slice(0, -5)}' нужно написать wa.me//+${chatId.slice(0, -5)}`);
+                    
                     user.status = true;
                     await user.save();
                 } else if (scriptIndex === 6) {
@@ -159,10 +159,10 @@ client.on("message", async (msg) => {
                         ? "Күте тұрыңыз, біз сізге код тағайындаймыз."
                         : "Ожидайте, присвоим вам код.";
                     await client.sendMessage(chatId, responseMessage);
-                    await client.sendMessage(
-                        "120363378709019183@g.us",
-                        `Клиенту с номером '${chatId.slice(0, -5)}' нужно написать wa.me//+${chatId.slice(0, -5)}`
-                    );
+                    
+                    // Отправка уведомления в группу
+                    await sendToGroup("120363378709019183@g.us", `Клиенту с номером '${chatId.slice(0, -5)}' нужно написать wa.me//+${chatId.slice(0, -5)}`);
+                    
                     user.status = true;
                     await user.save();
                 } else {
@@ -221,6 +221,48 @@ const gptResponse = async (text) => {
     } catch (error) {
         console.error("Ошибка в gptResponse:", error);
         return "Ошибка при обработке запроса GPT.";
+    }
+};
+
+// Функция для безопасной отправки сообщения в группу
+const sendToGroup = async (groupId, message) => {
+    try {
+        console.log(`🔄 Попытка отправки сообщения в группу ${groupId}`);
+        
+        // Метод 1: Через getChatById
+        try {
+            const groupChat = await client.getChatById(groupId);
+            if (groupChat && groupChat.isGroup) {
+                await groupChat.sendMessage(message);
+                console.log(`✅ Сообщение отправлено в группу: ${groupChat.name || groupId}`);
+                return true;
+            }
+        } catch (error1) {
+            console.log(`❌ Метод 1 не сработал: ${error1.message}`);
+        }
+
+        // Метод 2: Через getChats
+        try {
+            const chats = await client.getChats();
+            const group = chats.find(chat => chat.id._serialized === groupId && chat.isGroup);
+            
+            if (group) {
+                await group.sendMessage(message);
+                console.log(`✅ Сообщение отправлено в группу: ${group.name || groupId}`);
+                return true;
+            } else {
+                console.error(`❌ Группа с ID ${groupId} не найдена среди чатов`);
+            }
+        } catch (error2) {
+            console.log(`❌ Метод 2 не сработал: ${error2.message}`);
+        }
+
+        console.error(`❌ Все методы отправки в группу ${groupId} не сработали`);
+        return false;
+        
+    } catch (error) {
+        console.error(`❌ Общая ошибка при отправке сообщения в группу ${groupId}:`, error.message);
+        return false;
     }
 };
 
