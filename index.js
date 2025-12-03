@@ -138,20 +138,36 @@ client.on("message", async (msg) => {
     const message = msg.body;
 
     try {
-        // Альтернативный способ проверки контакта без использования getContacts()
-        let contactExists = null;
+        // Проверка, является ли отправитель сохраненным контактом
+        let isSavedContact = false;
         try {
             const contact = await msg.getContact();
-            contactExists = contact && contact.name && contact.name !== undefined ? contact : null;
+            // Контакт считается сохраненным, если у него есть имя и оно не равно номеру телефона
+            // или если есть pushname (имя из профиля WhatsApp)
+            if (contact) {
+                const contactName = contact.pushname || contact.name;
+                const phoneNumber = contact.id.user || chatId.replace('@c.us', '').replace('@s.whatsapp.net', '');
+                
+                // Если есть имя и оно отличается от номера телефона - это сохраненный контакт
+                if (contactName && contactName.trim() !== '' && contactName !== phoneNumber) {
+                    isSavedContact = true;
+                }
+                
+                // Дополнительная проверка через isMyContact, если доступно
+                if (contact.isMyContact === true) {
+                    isSavedContact = true;
+                }
+            }
         } catch (contactError) {
-            // Если не удалось получить контакт, считаем что это не контакт
-            contactExists = null;
+            // Если не удалось получить контакт, считаем что это не сохраненный контакт
+            isSavedContact = false;
         }
         
         let user = await User.findOne({ phone: chatId });
 
-        if (contactExists?.name !== undefined || (user && user.status)) {
-            console.log("Сообщение от контакта или пользователя со статусом true, пропускаем.");
+        // Пропускаем сообщения от сохраненных контактов или пользователей со статусом true
+        if (isSavedContact || (user && user.status)) {
+            console.log(`Сообщение от ${isSavedContact ? 'сохраненного контакта' : 'пользователя со статусом true'}, пропускаем.`);
             return;
         }
 
