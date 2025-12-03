@@ -139,48 +139,43 @@ client.on("message", async (msg) => {
 
     try {
         // Проверка, является ли отправитель сохраненным контактом
+        // Используем только методы, которые не требуют устаревшего API
         let isSavedContact = false;
         
         try {
-            // Метод 1: Проверка через контакт
-            const contactId = chatId.includes('@') ? chatId : `${chatId}@c.us`;
-            const contact = await client.getContactById(contactId);
+            // Метод 1: Проверка через msg.getContact() (не использует устаревший API)
+            const contact = await msg.getContact();
             
             if (contact) {
-                // Отладочная информация - выводим все свойства контакта
-                console.log(`🔍 Все свойства контакта ${contactId}:`, JSON.stringify({
-                    isMyContact: contact.isMyContact,
+                // Отладочная информация
+                console.log(`🔍 Проверка контакта ${chatId}:`, {
                     name: contact.name,
                     pushname: contact.pushname,
-                    number: contact.number,
-                    isUser: contact.isUser,
-                    isGroup: contact.isGroup,
-                    isWAContact: contact.isWAContact
-                }, null, 2));
+                    number: contact.number
+                });
                 
-                // Основная проверка: свойство isMyContact
-                if (contact.isMyContact === true) {
+                // Проверяем наличие сохраненного имени
+                // Если есть name и оно отличается от pushname и не является номером - это сохраненный контакт
+                const contactName = contact.name;
+                const pushName = contact.pushname || '';
+                const phoneNumber = contact.number || chatId.replace('@c.us', '').replace('@s.whatsapp.net', '');
+                
+                // Сохраненный контакт имеет name, которое:
+                // 1. Не пустое
+                // 2. Отличается от pushname (имя из профиля WhatsApp)
+                // 3. Не равно номеру телефона
+                // 4. Не является просто числом
+                if (contactName && 
+                    contactName.trim() !== '' && 
+                    contactName !== pushName && 
+                    contactName !== phoneNumber &&
+                    !contactName.match(/^\+?\d+$/)) {
                     isSavedContact = true;
-                    console.log(`✅ Контакт ${contactId} является сохраненным (isMyContact: true)`);
-                } else {
-                    // Альтернативная проверка: если есть name и оно не равно pushname
-                    const contactName = contact.name;
-                    const pushName = contact.pushname || '';
-                    const phoneNumber = contact.number || contactId.replace('@c.us', '').replace('@s.whatsapp.net', '');
-                    
-                    // Если есть name, оно не пустое, не равно pushname и не является номером телефона
-                    if (contactName && 
-                        contactName.trim() !== '' && 
-                        contactName !== pushName && 
-                        contactName !== phoneNumber &&
-                        !contactName.match(/^\+?\d+$/)) {
-                        isSavedContact = true;
-                        console.log(`✅ Контакт ${contactId} имеет сохраненное имя: "${contactName}" (pushname: "${pushName}")`);
-                    }
+                    console.log(`✅ Контакт ${chatId} определен как сохраненный: name="${contactName}", pushname="${pushName}"`);
                 }
             }
         } catch (contactError) {
-            console.log(`⚠️ Ошибка при получении контакта ${chatId}:`, contactError.message);
+            console.log(`⚠️ Ошибка при получении контакта через msg.getContact():`, contactError.message);
         }
         
         // Метод 2: Дополнительная проверка через чат
@@ -188,19 +183,26 @@ client.on("message", async (msg) => {
             try {
                 const chat = await msg.getChat();
                 if (chat && chat.name) {
-                    // Если имя чата не является номером телефона - это может быть сохраненный контакт
                     const phoneNumber = chatId.replace('@c.us', '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
-                    const chatName = chat.name.replace(/\D/g, '');
+                    const chatNameDigits = chat.name.replace(/\D/g, '');
                     
-                    // Если имя чата отличается от номера телефона и не является просто номером
-                    if (chat.name !== phoneNumber && chat.name !== chatId && !chat.name.match(/^\d+$/)) {
-                        // Дополнительная проверка: получаем контакт еще раз для подтверждения
-                        const contactId = chatId.includes('@') ? chatId : `${chatId}@c.us`;
-                        const contact = await client.getContactById(contactId);
+                    // Если имя чата не является номером телефона - это может быть сохраненный контакт
+                    if (chat.name !== phoneNumber && 
+                        chat.name !== chatId && 
+                        !chat.name.match(/^\+?\d+$/) &&
+                        chatNameDigits !== phoneNumber) {
                         
-                        if (contact && contact.name && contact.name === chat.name) {
+                        // Получаем контакт через msg.getContact() для подтверждения
+                        try {
+                            const contact = await msg.getContact();
+                            if (contact && contact.name && contact.name === chat.name) {
+                                isSavedContact = true;
+                                console.log(`✅ Контакт ${chatId} определен как сохраненный через имя чата: "${chat.name}"`);
+                            }
+                        } catch (e) {
+                            // Если имя чата не является номером, считаем что это сохраненный контакт
                             isSavedContact = true;
-                            console.log(`📞 Контакт ${contactId} определен как сохраненный через имя чата: "${chat.name}"`);
+                            console.log(`✅ Контакт ${chatId} определен как сохраненный по имени чата: "${chat.name}"`);
                         }
                     }
                 }
