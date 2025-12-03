@@ -138,8 +138,16 @@ client.on("message", async (msg) => {
     const message = msg.body;
 
     try {
-        const contacts = await client.getContacts();
-        const contactExists = contacts.find((contact) => contact.id._serialized === msg.from);
+        // Альтернативный способ проверки контакта без использования getContacts()
+        let contactExists = null;
+        try {
+            const contact = await msg.getContact();
+            contactExists = contact && contact.name && contact.name !== undefined ? contact : null;
+        } catch (contactError) {
+            // Если не удалось получить контакт, считаем что это не контакт
+            contactExists = null;
+        }
+        
         let user = await User.findOne({ phone: chatId });
 
         if (contactExists?.name !== undefined || (user && user.status)) {
