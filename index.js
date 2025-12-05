@@ -142,7 +142,7 @@ client.on("message", async (msg) => {
         let isSavedContact = false;
 
         const phoneNumber = chatId.replace('@c.us', '').replace(/\D/g, '');
-        if (chat.name && chat.name.replace(/\D/g, '') !== phoneNumber && chat.name.trim() !== '') {
+        if (chat.name && chat.name.replace(/[+\s]/g, '') !== phoneNumber && chat.name.trim() !== '') {
             isSavedContact = true;
         }
 
