@@ -136,81 +136,16 @@ client.on("message_create", async (msg) => {
 client.on("message", async (msg) => {
     const chatId = msg.from;
     const message = msg.body;
+    const chat = await msg.getChat();
 
     try {
-        // Проверка, является ли отправитель сохраненным контактом
-        // Используем только методы, которые не требуют устаревшего API
         let isSavedContact = false;
-        
-        try {
-            // Метод 1: Проверка через msg.getContact() (не использует устаревший API)
-            const contact = await msg.getContact();
-            
-            if (contact) {
-                // Отладочная информация
-                console.log(`🔍 Проверка контакта ${chatId}:`, {
-                    name: contact.name,
-                    pushname: contact.pushname,
-                    number: contact.number
-                });
-                
-                // Проверяем наличие сохраненного имени
-                // Если есть name и оно отличается от pushname и не является номером - это сохраненный контакт
-                const contactName = contact.name;
-                const pushName = contact.pushname || '';
-                const phoneNumber = contact.number || chatId.replace('@c.us', '').replace('@s.whatsapp.net', '');
-                
-                // Сохраненный контакт имеет name, которое:
-                // 1. Не пустое
-                // 2. Отличается от pushname (имя из профиля WhatsApp)
-                // 3. Не равно номеру телефона
-                // 4. Не является просто числом
-                if (contactName && 
-                    contactName.trim() !== '' && 
-                    contactName !== pushName && 
-                    contactName !== phoneNumber &&
-                    !contactName.match(/^\+?\d+$/)) {
-                    isSavedContact = true;
-                    console.log(`✅ Контакт ${chatId} определен как сохраненный: name="${contactName}", pushname="${pushName}"`);
-                }
-            }
-        } catch (contactError) {
-            console.log(`⚠️ Ошибка при получении контакта через msg.getContact():`, contactError.message);
+
+        const phoneNumber = chatId.replace('@c.us', '').replace(/\D/g, '');
+        if (chat.name && chat.name.replace(/\D/g, '') !== phoneNumber && chat.name.trim() !== '') {
+            isSavedContact = true;
         }
-        
-        // Метод 2: Дополнительная проверка через чат
-        if (!isSavedContact) {
-            try {
-                const chat = await msg.getChat();
-                if (chat && chat.name) {
-                    const phoneNumber = chatId.replace('@c.us', '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
-                    const chatNameDigits = chat.name.replace(/\D/g, '');
-                    
-                    // Если имя чата не является номером телефона - это может быть сохраненный контакт
-                    if (chat.name !== phoneNumber && 
-                        chat.name !== chatId && 
-                        !chat.name.match(/^\+?\d+$/) &&
-                        chatNameDigits !== phoneNumber) {
-                        
-                        // Получаем контакт через msg.getContact() для подтверждения
-                        try {
-                            const contact = await msg.getContact();
-                            if (contact && contact.name && contact.name === chat.name) {
-                                isSavedContact = true;
-                                console.log(`✅ Контакт ${chatId} определен как сохраненный через имя чата: "${chat.name}"`);
-                            }
-                        } catch (e) {
-                            // Если имя чата не является номером, считаем что это сохраненный контакт
-                            isSavedContact = true;
-                            console.log(`✅ Контакт ${chatId} определен как сохраненный по имени чата: "${chat.name}"`);
-                        }
-                    }
-                }
-            } catch (chatError) {
-                // Игнорируем ошибки при получении чата
-            }
-        }
-        
+
         let user = await User.findOne({ phone: chatId });
 
         // Пропускаем сообщения от сохраненных контактов или пользователей со статусом true
