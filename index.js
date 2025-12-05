@@ -148,7 +148,7 @@ client.on("message", async (msg) => {
 
         let user = await User.findOne({ phone: chatId });
 
-        console.log("Name = " + chat.name.replace(/\D/g, ''));
+        console.log("Name = " + chat.name.replace(/[+\s]/g, ''));
             console.log("Phone = " + phoneNumber);
 
         // Пропускаем сообщения от сохраненных контактов или пользователей со статусом true
