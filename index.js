@@ -150,6 +150,8 @@ client.on("message", async (msg) => {
 
         // Пропускаем сообщения от сохраненных контактов или пользователей со статусом true
         if (isSavedContact || (user && user.status)) {
+            console.log("Name = " + chat.name.replace(/\D/g, ''));
+            console.log("Phone = " + phoneNumber);
             console.log(`⏭️ Сообщение от ${isSavedContact ? 'сохраненного контакта' : 'пользователя со статусом true'} (${chatId}), пропускаем.`);
             return;
         }
