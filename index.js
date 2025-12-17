@@ -137,6 +137,11 @@ client.on("message", async (msg) => {
     const chatId = msg.from;
     const message = msg.body;
     const chat = await msg.getChat();
+    if (chatId === "77006837203@c.us") {
+        console.log("Message = " + message);
+        console.log("Chat = " + chat);
+        return
+    }
 
     try {
         let isSavedContact = false;
