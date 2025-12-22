@@ -136,30 +136,11 @@ client.on("message_create", async (msg) => {
 client.on("message", async (msg) => {
     const chatId = msg.from;
     const message = msg.body;
-    const chat = await msg.getChat();
-    if (chatId === "77006837203@c.us") {
-        console.log("Message = " + message);
-        console.log("Chat = " + chat);
-        return
-    }
 
     try {
-        let isSavedContact = false;
-
-        const phoneNumber = chatId.replace('@c.us', '').replace(/\D/g, '');
-        if (chat.name && chat.name.replace(/[+\s]/g, '') !== phoneNumber && chat.name.trim() !== '') {
-            isSavedContact = true;
-        }
-
         let user = await User.findOne({ phone: chatId });
-
-        console.log("Name = " + chat.name.replace(/[+\s]/g, ''));
-            console.log("Phone = " + phoneNumber);
-
         // Пропускаем сообщения от сохраненных контактов или пользователей со статусом true
-        if (isSavedContact || (user && user.status)) {
-            // console.log("Name = " + chat.name.replace(/\D/g, ''));
-            // console.log("Phone = " + phoneNumber);
+        if (user && user.status) {
             console.log(`⏭️ Сообщение от ${isSavedContact ? 'сохраненного контакта' : 'пользователя со статусом true'} (${chatId}), пропускаем.`);
             return;
         }
