@@ -143,7 +143,6 @@ client.on("message", async (msg) => {
         let user = await User.findOne({ phone: chatId });
         // Пропускаем сообщения от сохраненных контактов или пользователей со статусом true
         if (user && user.status) {
-            console.log(`⏭️ Сообщение от ${isSavedContact ? 'сохраненного контакта' : 'пользователя со статусом true'} (${chatId}), пропускаем.`);
             return;
         }
 
