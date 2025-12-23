@@ -137,6 +137,8 @@ client.on("message", async (msg) => {
     const chatId = msg.from;
     const message = msg.body;
 
+    console.log(`🔄 Получено сообщение от ${chatId}`);
+
     try {
         let user = await User.findOne({ phone: chatId });
         // Пропускаем сообщения от сохраненных контактов или пользователей со статусом true
